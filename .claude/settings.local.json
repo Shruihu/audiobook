@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter:*)",
+      "Bash(dart pub:*)",
+      "Bash(dart analyze:*)",
+      "Bash(curl -s \"https://api.github.com/search/repositories?q=android+audiobook+player+language:kotlin&sort=stars&order=desc&per_page=15\")",
+      "Bash(python3 -c \" import json, sys data = json.load\\(sys.stdin\\) for r in data.get\\('items', []\\)[:15]: print\\(f\\\\\"Stars: {r['stargazers_count']:>6} | Updated: {r['updated_at'][:10]} | Lang: {r.get\\('language','N/A'\\):>8} | {r['full_name']}\\\\\"\\) print\\(f\\\\\" {r['description'][:120] if r['description'] else 'No description'}\\\\\"\\) print\\(f\\\\\" URL: {r['html_url']}\\\\\"\\) print\\(\\) \")",
+      "Bash(curl -s \"https://api.github.com/search/repositories?q=android+audiobook+player&sort=stars&order=desc&per_page=15\")",
+      "Bash(python3 -c \" import json, sys data = json.load\\(sys.stdin\\) for r in data.get\\('items', []\\)[:15]: print\\(f\\\\\"Stars: {r['stargazers_count']:>6} | Updated: {r['updated_at'][:10]} | Lang: {r.get\\('language','N/A'\\):>8} | {r['full_name']}\\\\\"\\) print\\(f\\\\\" {r['description'][:120] if r['description'] else 'No description'}\\\\\"\\) print\\(\\) \")",
+      "Bash(curl -s \"https://api.github.com/repos/PaulWoitaschek/Voice\")",
+      "Bash(python3 -c \" import json, sys r = json.load\\(sys.stdin\\) print\\(f\\\\\"Name: {r['full_name']}\\\\\"\\) print\\(f\\\\\"Stars: {r['stargazers_count']}\\\\\"\\) print\\(f\\\\\"Forks: {r['forks_count']}\\\\\"\\) print\\(f\\\\\"Language: {r['language']}\\\\\"\\) print\\(f\\\\\"License: {r['license']['name'] if r.get\\('license'\\) else 'N/A'}\\\\\"\\) print\\(f\\\\\"Topics: {r.get\\('topics', []\\)}\\\\\"\\) print\\(f\\\\\"Description: {r['description']}\\\\\"\\) print\\(f\\\\\"URL: {r['html_url']}\\\\\"\\) print\\(f\\\\\"Last updated: {r['updated_at']}\\\\\"\\) print\\(\\) print\\('README \\(first 3000 chars\\):'\\) \")",
+      "Bash(python3 -c \" import json, sys, base64 r = json.load\\(sys.stdin\\) if 'content' in r: content = base64.b64decode\\(r['content']\\).decode\\('utf-8'\\) print\\(content[:5000]\\) \")",
+      "Bash(python3 -c \" import json, sys data = json.load\\(sys.stdin\\) for r in data.get\\('items', []\\)[:20]: name = r['full_name'] stars = r['stargazers_count'] lang = r.get\\('language','N/A'\\) desc = \\(r['description'] or 'No description'\\)[:100] print\\(f\\\\\"Stars: {stars:>6} | {lang:>8} | {name}\\\\\"\\) print\\(f\\\\\" {desc}\\\\\"\\) print\\(\\) \")",
+      "Bash(python3 -c \" import json, sys r = json.load\\(sys.stdin\\) print\\(f\\\\\"Stars: {r['stargazers_count']} | Lang: {r['language']} | {r['full_name']}\\\\\"\\) print\\(f\\\\\"Topics: {r.get\\('topics', []\\)}\\\\\"\\) print\\(f\\\\\"Description: {r['description']}\\\\\"\\) \" echo \"---\" curl -s \"https://api.github.com/repos/flackbash/AudioAnchor\")",
+      "Bash(python3 -c \" import json, sys r = json.load\\(sys.stdin\\) print\\(f\\\\\"Stars: {r['stargazers_count']} | Lang: {r['language']} | {r['full_name']}\\\\\"\\) print\\(f\\\\\"Topics: {r.get\\('topics', []\\)}\\\\\"\\) print\\(f\\\\\"Description: {r['description']}\\\\\"\\) \" echo \"---\")",
+      "Bash(python3 -c \" import json, sys data = json.load\\(sys.stdin\\) print\\('Android audiobook repos \\(Java/Kotlin\\):'\\) for r in data.get\\('items', []\\)[:10]: print\\(f\\\\\"Stars: {r['stargazers_count']:>6} | {r.get\\('language','N/A'\\):>8} | {r['full_name']}\\\\\"\\) print\\(f\\\\\" {\\(r['description'] or 'No desc'\\)[:100]}\\\\\"\\) \" echo \"---\")",
+      "Bash(python3 -c \" import json, sys r = json.load\\(sys.stdin\\) print\\(f\\\\\"ExoPlayer \\(now Media3\\): Stars: {r['stargazers_count']} | Lang: {r['language']} | {r['full_name']}\\\\\"\\) print\\(f\\\\\"Description: {r['description']}\\\\\"\\) \" curl -s \"https://api.github.com/repos/androidx/media\")",
+      "Bash(python3 -c \" import json, sys r = json.load\\(sys.stdin\\) print\\(f\\\\\"AndroidX Media \\(Media3\\): Stars: {r['stargazers_count']} | Lang: {r['language']} | {r['full_name']}\\\\\"\\) print\\(f\\\\\"Description: {r['description']}\\\\\"\\) \")",
+      "Bash(python3 -c \" import json, sys data = json.load\\(sys.stdin\\) for f in data: if 'build' in f['name'].lower\\(\\) or 'gradle' in f['name'].lower\\(\\): print\\(f['name']\\) \")",
+      "Bash(python3 -c \" import json, sys data = json.load\\(sys.stdin\\) if isinstance\\(data, list\\): for f in sorted\\(data, key=lambda x: x['name']\\): print\\(f['name']\\) else: print\\(data.get\\('message', 'Could not read'\\)\\) \")",
+      "Bash(curl *)",
+      "Bash(python3 -c \" import json, sys data = json.load\\(sys.stdin\\) for item in data.get\\('tree', []\\): if 'Book.kt' in item['path'] and '/main/' in item['path']: print\\(item['path']\\) \")",
+      "WebFetch(domain:pub.dev)",
+      "WebFetch(domain:www.google.com)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}
