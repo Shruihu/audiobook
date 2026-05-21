@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'library_screen.dart';
+import 'abs_library_screen.dart';
 import 'player_screen.dart';
 import 'settings_screen.dart';
 
@@ -14,17 +14,15 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _currentIndex = 0;
 
-  final _pages = const [
-    LibraryScreen(),
-    SettingsScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
-        children: _pages,
+        children: const [
+          AbsLibraryScreen(),
+          SettingsScreen(),
+        ],
       ),
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
@@ -33,10 +31,12 @@ class _HomeShellState extends State<HomeShell> {
           BottomNavigationBar(
             currentIndex: _currentIndex,
             onTap: (index) => setState(() => _currentIndex = index),
+            selectedFontSize: 12,
+            unselectedFontSize: 12,
             items: const [
               BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: '首页',
+                icon: Icon(Icons.library_books),
+                label: '有声书',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.settings),

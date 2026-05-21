@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 
 import '../models/audio_track.dart' as models;
-import 'smb_cache_manager.dart';
 
 class _BytesAudioSource extends StreamAudioSource {
   final Uint8List _bytes;
@@ -30,7 +28,6 @@ class _BytesAudioSource extends StreamAudioSource {
 class AudioPlayerService {
   final AudioPlayer _justAudioPlayer = AudioPlayer();
   Player? _mediaKitPlayer;
-  final SmbCacheManager _cacheManager = SmbCacheManager();
 
   models.AudioTrack? _currentTrack;
   final List<models.AudioTrack> _playlist = [];
@@ -110,32 +107,10 @@ class AudioPlayerService {
 
     try {
       debugPrint('Playing audio: ${_currentTrack!.playbackPath}');
-      debugPrint('Track isSmb: ${_currentTrack!.isSmb}');
-      
-      String localPath;
-      
-      // 如果是 SMB 文件，先下载到本地缓存
-      if (_currentTrack!.isSmb) {
-        debugPrint('Detected SMB file, downloading to cache...');
-        debugPrint('SMB URL: ${_currentTrack!.smbUrl}');
-        debugPrint('Remote path: ${_currentTrack!.remotePath}');
-        
-        if (_currentTrack!.smbConfig == null) {
-          throw Exception('SMB configuration is missing');
-        }
-        
-        localPath = await _cacheManager.downloadFile(
-          smbUrl: _currentTrack!.smbUrl!,
-          config: _currentTrack!.smbConfig!,
-          remotePath: _currentTrack!.remotePath!,
-        );
-        debugPrint('Downloaded to: $localPath');
-      } else {
-        // 本地文件直接使用
-        localPath = _currentTrack!.filePath;
-        debugPrint('Using local file: $localPath');
-      }
-      
+
+      final localPath = _currentTrack!.filePath;
+      debugPrint('Using local file: $localPath');
+
       // 检测是否为 WMA 格式
       final isWma = localPath.toLowerCase().endsWith('.wma');
       debugPrint('File format: ${isWma ? "WMA" : "Non-WMA"}');
@@ -264,4 +239,16 @@ class AudioPlayerService {
   double get volume => _justAudioPlayer.volume;
 
   Stream<double> get volumeStream => _justAudioPlayer.volumeStream;
+
+  double _playbackSpeed = 1.0;
+  double get playbackSpeed => _playbackSpeed;
+
+  Future<void> setSpeed(double speed) async {
+    _playbackSpeed = speed.clamp(0.5, 2.0);
+    if (_useMediaKit && _mediaKitPlayer != null) {
+      await _mediaKitPlayer!.setRate(_playbackSpeed);
+    } else {
+      await _justAudioPlayer.setSpeed(_playbackSpeed);
+    }
+  }
 }

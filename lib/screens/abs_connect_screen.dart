@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
-import '../models/smb_config.dart';
-import '../services/smb_service.dart';
-import '../services/smb_storage.dart';
-import 'smb_browser_screen.dart';
+import '../models/audiobookshelf_config.dart';
+import '../services/abs_storage.dart';
+import '../services/audiobookshelf_service.dart';
+import 'abs_library_screen.dart';
 
-class SmbConnectScreen extends StatefulWidget {
-  const SmbConnectScreen({super.key});
+class AudioBookshelfConnectScreen extends StatefulWidget {
+  const AudioBookshelfConnectScreen({super.key});
 
   @override
-  State<SmbConnectScreen> createState() => _SmbConnectScreenState();
+  State<AudioBookshelfConnectScreen> createState() => _AbsConnectScreenState();
 }
 
-class _SmbConnectScreenState extends State<SmbConnectScreen> {
-  List<SmbConfig> _savedConfigs = [];
+class _AbsConnectScreenState extends State<AudioBookshelfConnectScreen> {
+  List<AudioBookshelfConfig> _savedConfigs = [];
   bool _isLoading = true;
 
   @override
@@ -23,7 +23,7 @@ class _SmbConnectScreenState extends State<SmbConnectScreen> {
   }
 
   Future<void> _loadConfigs() async {
-    final configs = await SmbStorage.getSavedConfigs();
+    final configs = await AbsStorage.getSavedConfigs();
     setState(() {
       _savedConfigs = configs;
       _isLoading = false;
@@ -33,22 +33,22 @@ class _SmbConnectScreenState extends State<SmbConnectScreen> {
   void _addNew() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const _SmbEditScreen()),
+      MaterialPageRoute(builder: (_) => const _AbsEditScreen()),
     ).then((_) => _loadConfigs());
   }
 
-  void _connectTo(SmbConfig config) async {
-    final smbService = SmbService();
+  void _connectTo(AudioBookshelfConfig config) async {
+    final absService = AudioBookshelfService();
     _showConnecting();
     try {
-      await smbService.connect(config);
+      await absService.connect(config);
       if (!mounted) return;
       Navigator.pop(context);
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => SmbBrowserScreen(
-            smbService: smbService,
+          builder: (_) => AbsLibraryScreen(
+            absService: absService,
             config: config,
           ),
         ),
@@ -78,7 +78,7 @@ class _SmbConnectScreenState extends State<SmbConnectScreen> {
     );
   }
 
-  Future<void> _deleteConfig(SmbConfig config) async {
+  Future<void> _deleteConfig(AudioBookshelfConfig config) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -97,7 +97,7 @@ class _SmbConnectScreenState extends State<SmbConnectScreen> {
       ),
     );
     if (confirm == true) {
-      await SmbStorage.removeConfig(config);
+      await AbsStorage.removeConfig(config);
       _loadConfigs();
     }
   }
@@ -106,7 +106,7 @@ class _SmbConnectScreenState extends State<SmbConnectScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SMB/NAS 连接'),
+        title: const Text('AudioBookshelf 连接'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -122,7 +122,7 @@ class _SmbConnectScreenState extends State<SmbConnectScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.lan, size: 64, color: Colors.grey),
+                      const Icon(Icons.cloud, size: 64, color: Colors.grey),
                       const SizedBox(height: 16),
                       const Text('暂无已保存的连接',
                           style: TextStyle(color: Colors.grey)),
@@ -140,12 +140,11 @@ class _SmbConnectScreenState extends State<SmbConnectScreen> {
                   itemBuilder: (context, index) {
                     final config = _savedConfigs[index];
                     return ListTile(
-                      leading: const Icon(Icons.storage),
-                      title: Text(config.displayName),
-                      subtitle: Text(config.username ?? '匿名访问'),
+                      leading: const Icon(Icons.cloud),
+                      title: Text(config.serverUrl),
+                      subtitle: Text(config.username ?? '匿名'),
                       trailing: IconButton(
-                        icon:
-                            const Icon(Icons.delete_outline, color: Colors.red),
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
                         onPressed: () => _deleteConfig(config),
                       ),
                       onTap: () => _connectTo(config),
@@ -156,65 +155,59 @@ class _SmbConnectScreenState extends State<SmbConnectScreen> {
   }
 }
 
-class _SmbEditScreen extends StatefulWidget {
-  const _SmbEditScreen();
+class _AbsEditScreen extends StatefulWidget {
+  const _AbsEditScreen();
 
   @override
-  State<_SmbEditScreen> createState() => _SmbEditScreenState();
+  State<_AbsEditScreen> createState() => _AbsEditScreenState();
 }
 
-class _SmbEditScreenState extends State<_SmbEditScreen> {
-  final _hostController = TextEditingController();
-  final _shareController = TextEditingController();
+class _AbsEditScreenState extends State<_AbsEditScreen> {
+  final _serverUrlController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _domainController = TextEditingController();
   bool _connecting = false;
 
   @override
   void dispose() {
-    _hostController.dispose();
-    _shareController.dispose();
+    _serverUrlController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
-    _domainController.dispose();
     super.dispose();
   }
 
   Future<void> _testAndSave() async {
-    final host = _hostController.text.trim();
-    final share = _shareController.text.trim();
-    if (host.isEmpty || share.isEmpty) {
+    final serverUrl = _serverUrlController.text.trim();
+    if (serverUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请填写服务器地址和共享名称')),
+        const SnackBar(content: Text('请填写服务器地址')),
       );
       return;
     }
 
     setState(() => _connecting = true);
 
-    final config = SmbConfig(
-      host: host,
-      share: share,
-      username:
-          _usernameController.text.trim().isEmpty ? null : _usernameController.text.trim(),
-      password:
-          _passwordController.text.isEmpty ? null : _passwordController.text,
-      domain:
-          _domainController.text.trim().isEmpty ? null : _domainController.text.trim(),
+    final config = AudioBookshelfConfig(
+      serverUrl: serverUrl,
+      username: _usernameController.text.trim().isEmpty
+          ? null
+          : _usernameController.text.trim(),
+      password: _passwordController.text.isEmpty
+          ? null
+          : _passwordController.text,
     );
 
-    final smbService = SmbService();
+    final absService = AudioBookshelfService();
     try {
-      await smbService.connect(config);
-      await SmbStorage.saveConfig(config);
+      await absService.connect(config);
+      await AbsStorage.saveConfig(config);
       if (!mounted) return;
       Navigator.pop(context);
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => SmbBrowserScreen(
-            smbService: smbService,
+          builder: (_) => AbsLibraryScreen(
+            absService: absService,
             config: config,
           ),
         ),
@@ -232,27 +225,18 @@ class _SmbEditScreenState extends State<_SmbEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('添加 SMB 连接')),
+      appBar: AppBar(title: const Text('添加 AudioBookshelf 连接')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           TextField(
-            controller: _hostController,
+            controller: _serverUrlController,
             decoration: const InputDecoration(
               labelText: '服务器地址',
-              hintText: '192.168.100.7',
-              prefixIcon: Icon(Icons.computer),
+              hintText: 'http://192.168.100.7:13378',
+              prefixIcon: Icon(Icons.cloud),
             ),
             keyboardType: TextInputType.url,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _shareController,
-            decoration: const InputDecoration(
-              labelText: '共享名称',
-              hintText: '有声书',
-              prefixIcon: Icon(Icons.folder_shared),
-            ),
           ),
           const SizedBox(height: 24),
           Text('认证信息（可选）',
@@ -262,6 +246,7 @@ class _SmbEditScreenState extends State<_SmbEditScreen> {
             controller: _usernameController,
             decoration: const InputDecoration(
               labelText: '用户名',
+              hintText: 'admin',
               prefixIcon: Icon(Icons.person),
             ),
           ),
@@ -273,14 +258,6 @@ class _SmbEditScreenState extends State<_SmbEditScreen> {
               prefixIcon: Icon(Icons.lock),
             ),
             obscureText: true,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _domainController,
-            decoration: const InputDecoration(
-              labelText: '域（一般留空）',
-              prefixIcon: Icon(Icons.domain),
-            ),
           ),
           const SizedBox(height: 32),
           FilledButton.icon(

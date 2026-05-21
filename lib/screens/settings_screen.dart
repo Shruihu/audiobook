@@ -1,14 +1,146 @@
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/audiobookshelf_config.dart';
 import '../providers/player_provider.dart';
-import '../services/folder_scanner.dart';
-import 'smb_connect_screen.dart';
+import '../services/abs_storage.dart';
+import 'abs_connect_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  void _showPlaybackSpeedSheet(BuildContext context, PlayerProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('播放速度', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            ListTile(
+              title: const Text('0.5x'),
+              trailing: provider.playbackSpeed == 0.5 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
+              onTap: () {
+                provider.setPlaybackSpeed(0.5);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: const Text('0.75x'),
+              trailing: provider.playbackSpeed == 0.75 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
+              onTap: () {
+                provider.setPlaybackSpeed(0.75);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: const Text('1.0x'),
+              trailing: provider.playbackSpeed == 1.0 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
+              onTap: () {
+                provider.setPlaybackSpeed(1.0);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: const Text('1.25x'),
+              trailing: provider.playbackSpeed == 1.25 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
+              onTap: () {
+                provider.setPlaybackSpeed(1.25);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: const Text('1.5x'),
+              trailing: provider.playbackSpeed == 1.5 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
+              onTap: () {
+                provider.setPlaybackSpeed(1.5);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              title: const Text('2.0x'),
+              trailing: provider.playbackSpeed == 2.0 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
+              onTap: () {
+                provider.setPlaybackSpeed(2.0);
+                Navigator.pop(ctx);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSleepTimerSheet(BuildContext context, PlayerProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('定时关闭', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.timer),
+              title: const Text('15 分钟'),
+              onTap: () {
+                provider.setSleepTimer(const Duration(minutes: 15));
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.timer),
+              title: const Text('30 分钟'),
+              onTap: () {
+                provider.setSleepTimer(const Duration(minutes: 30));
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.timer),
+              title: const Text('45 分钟'),
+              onTap: () {
+                provider.setSleepTimer(const Duration(minutes: 45));
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.timer),
+              title: const Text('1 小时'),
+              onTap: () {
+                provider.setSleepTimer(const Duration(hours: 1));
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.timer),
+              title: const Text('2 小时'),
+              onTap: () {
+                provider.setSleepTimer(const Duration(hours: 2));
+                Navigator.pop(ctx);
+              },
+            ),
+            if (provider.hasSleepTimer)
+              ListTile(
+                leading: const Icon(Icons.timer_off, color: Colors.red),
+                title: const Text('取消定时', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  provider.cancelSleepTimer();
+                  Navigator.pop(ctx);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,50 +150,58 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          const _SectionHeader(title: '书库管理'),
+          const _SectionHeader(title: '网络书库'),
+          ListTile(
+            leading: const Icon(Icons.cloud),
+            title: const Text('AudioBookshelf'),
+            subtitle: const Text('连接到 AudioBookshelf 服务器'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AudioBookshelfConnectScreen()),
+              );
+            },
+          ),
           Consumer<PlayerProvider>(
             builder: (context, provider, _) {
               return ListTile(
                 leading: const Icon(Icons.folder_open),
-                title: const Text('管理目录'),
-                subtitle: Text('已添加 ${provider.books.length} 本有声书'),
+                title: const Text('管理连接'),
+                subtitle: const Text('查看和管理 AudioBookshelf 连接'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const _LibraryManageScreen()),
+                    MaterialPageRoute(builder: (_) => const _ConnectionManageScreen()),
                   );
                 },
               );
             },
           ),
           const Divider(),
-          const _SectionHeader(title: '网络书库'),
-          ListTile(
-            leading: const Icon(Icons.lan),
-            title: const Text('SMB/NAS 连接'),
-            subtitle: const Text('从局域网 NAS 浏览有声书'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SmbConnectScreen()),
+          const _SectionHeader(title: '播放设置'),
+          Consumer<PlayerProvider>(
+            builder: (context, provider, _) {
+              return ListTile(
+                leading: const Icon(Icons.speed),
+                title: const Text('播放速度'),
+                subtitle: Text('${provider.playbackSpeed.toStringAsFixed(1)}x'),
+                onTap: () => _showPlaybackSpeedSheet(context, provider),
               );
             },
           ),
-          const Divider(),
-          const _SectionHeader(title: '播放设置'),
-          ListTile(
-            leading: const Icon(Icons.speed),
-            title: const Text('播放速度'),
-            subtitle: const Text('1.0x'),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: const Icon(Icons.timer),
-            title: const Text('定时关闭'),
-            subtitle: const Text('未开启'),
-            onTap: () {},
+          Consumer<PlayerProvider>(
+            builder: (context, provider, _) {
+              return ListTile(
+                leading: const Icon(Icons.timer),
+                subtitle: Text(provider.hasSleepTimer
+                    ? '${provider.sleepRemaining.inMinutes} 分钟后关闭'
+                    : '未开启'),
+                title: const Text('定时关闭'),
+                onTap: () => _showSleepTimerSheet(context, provider),
+              );
+            },
           ),
           const Divider(),
           const _SectionHeader(title: '关于'),
@@ -96,28 +236,52 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _LibraryManageScreen extends StatelessWidget {
-  const _LibraryManageScreen();
+class _ConnectionManageScreen extends StatefulWidget {
+  const _ConnectionManageScreen();
 
-  Future<void> _addDirectory(BuildContext context) async {
-    final provider = context.read<PlayerProvider>();
+  @override
+  State<_ConnectionManageScreen> createState() => _ConnectionManageScreenState();
+}
 
-    if (kIsWeb) {
-      final result = await FilePicker.platform.pickFiles(
-        allowMultiple: true,
-        type: FileType.custom,
-        allowedExtensions:
-            FolderScanner.supportedExtensions.map((e) => e.substring(1)).toList(),
-        withData: true,
-      );
-      if (result != null && result.files.isNotEmpty) {
-        provider.addBooksFromFiles(result.files);
-      }
-    } else {
-      final path = await FilePicker.platform.getDirectoryPath();
-      if (path != null) {
-        await provider.addDirectory(path);
-      }
+class _ConnectionManageScreenState extends State<_ConnectionManageScreen> {
+  List<AudioBookshelfConfig> _configs = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfigs();
+  }
+
+  Future<void> _loadConfigs() async {
+    final configs = await AbsStorage.getSavedConfigs();
+    setState(() {
+      _configs = configs;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _deleteConfig(AudioBookshelfConfig config) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('确认删除'),
+        content: Text('删除连接 "${config.displayName}"？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await AbsStorage.removeConfig(config);
+      _loadConfigs();
     }
   }
 
@@ -125,74 +289,48 @@ class _LibraryManageScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('管理目录'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: kIsWeb ? '选择音频文件' : '添加目录',
-            onPressed: () => _addDirectory(context),
-          ),
-        ],
+        title: const Text('管理连接'),
       ),
-      body: Consumer<PlayerProvider>(
-        builder: (context, provider, _) {
-          if (provider.books.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.folder_off, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text('暂无已添加目录', style: TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => _addDirectory(context),
-                    icon: const Icon(Icons.add),
-                    label: Text(kIsWeb ? '选择文件' : '添加目录'),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _configs.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.cloud_off, size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      const Text('暂无已保存的连接', style: TextStyle(color: Colors.grey)),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const AudioBookshelfConnectScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.add),
+                        label: const Text('添加连接'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            itemCount: provider.books.length,
-            itemBuilder: (context, index) {
-              final book = provider.books[index];
-              return ListTile(
-                leading: const Icon(Icons.folder),
-                title: Text(book.name),
-                subtitle: Text('${book.trackCount} 集'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  onPressed: () async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('确认移除'),
-                        content: Text('从书库中移除"${book.name}"？'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('取消'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('移除', style: TextStyle(color: Colors.red)),
-                          ),
-                        ],
+                )
+              : ListView.builder(
+                  itemCount: _configs.length,
+                  itemBuilder: (context, index) {
+                    final config = _configs[index];
+                    return ListTile(
+                      leading: const Icon(Icons.cloud),
+                      title: Text(config.serverUrl),
+                      subtitle: Text(config.username ?? '匿名'),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => _deleteConfig(config),
                       ),
                     );
-                    if (confirm == true) {
-                      provider.removeBook(book);
-                    }
                   },
                 ),
-              );
-            },
-          );
-        },
-      ),
     );
   }
 }

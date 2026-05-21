@@ -34,6 +34,7 @@ class PlayerProvider extends ChangeNotifier {
   Duration get position => _position;
   Duration get duration => _duration;
   double get volume => _volume;
+  double get playbackSpeed => _playerService.playbackSpeed;
   AudioPlayerService get playerService => _playerService;
   bool get hasSleepTimer => _sleepTimer != null;
   Duration? get sleepDuration => _sleepDuration;
@@ -114,13 +115,20 @@ class PlayerProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      debugPrint('Adding directory: $path');
       final newBooks = await FolderScanner.scanDirectory(path);
+      debugPrint('Found ${newBooks.length} books in directory');
       if (newBooks.isNotEmpty) {
         _books.addAll(newBooks);
         await LibraryStorage.addPath(path);
+        debugPrint('Directory added successfully');
+      } else {
+        debugPrint('No audio files found in directory');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('addDirectory error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
     } finally {
       _isScanning = false;
       notifyListeners();
@@ -172,15 +180,9 @@ class PlayerProvider extends ChangeNotifier {
   /// Remove a book from library.
   Future<void> removeBook(AudioBook book) async {
     _books.remove(book);
-    if (!kIsWeb && !book.folderPath.startsWith('smb://')) {
+    if (!kIsWeb) {
       await LibraryStorage.removePath(book.folderPath);
     }
-    notifyListeners();
-  }
-
-  /// Add a book from SMB browsing.
-  void addSmbBook(AudioBook book) {
-    _books.add(book);
     notifyListeners();
   }
 
@@ -271,6 +273,11 @@ class PlayerProvider extends ChangeNotifier {
   Future<void> setVolume(double value) async {
     _volume = value.clamp(0.0, 1.0);
     await _playerService.setVolume(_volume);
+    notifyListeners();
+  }
+
+  Future<void> setPlaybackSpeed(double speed) async {
+    await _playerService.setSpeed(speed);
     notifyListeners();
   }
 

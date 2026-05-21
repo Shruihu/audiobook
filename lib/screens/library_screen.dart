@@ -38,16 +38,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.library_music, size: 64, color: Colors.deepPurple),
+                  const Icon(Icons.library_music, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
                   const Text(
                     '暂无有声书',
                     style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '请从 SMB/NAS 连接添加音频',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ],
               ),
