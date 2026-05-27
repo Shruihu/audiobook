@@ -151,7 +151,7 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
 
   AudioBook _convertToAudioBook(AbsLibraryItem item) {
     final tracks = item.tracks.map((t) => AudioTrack(
-      filePath: t.contentUrl,
+      filePath: _absService?.appendToken(t.contentUrl) ?? t.contentUrl,
       title: t.title.isNotEmpty ? t.title : 'Track ${t.index + 1}',
       bookName: item.title ?? 'Unknown',
       duration: t.duration != null ? Duration(milliseconds: (t.duration! * 1000).round()) : null,
@@ -166,23 +166,33 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_selectedLibrary?.name ?? _config?.serverUrl ?? '有声书'),
-        actions: _selectedLibrary != null
-            ? [
-                IconButton(
-                  icon: const Icon(Icons.home),
-                  onPressed: () {
-                    setState(() {
-                      _selectedLibrary = null;
-                    });
-                  },
-                ),
-              ]
-            : null,
+    return PopScope(
+      canPop: _selectedLibrary == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _selectedLibrary != null) {
+          setState(() {
+            _selectedLibrary = null;
+          });
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_selectedLibrary?.name ?? '有声书库'),
+          actions: _selectedLibrary != null
+              ? [
+                  IconButton(
+                    icon: const Icon(Icons.home),
+                    onPressed: () {
+                      setState(() {
+                        _selectedLibrary = null;
+                      });
+                    },
+                  ),
+                ]
+              : null,
+        ),
+        body: _buildContent(),
       ),
-      body: _buildContent(),
     );
   }
 
@@ -287,7 +297,7 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
           child: ListTile(
             leading: _buildCover(item),
             title: Text(item.title ?? 'Unknown'),
-            subtitle: Text('${item.author ?? 'Unknown'} · $trackCount 集'),
+            subtitle: Text('${item.author ?? 'Unknown'} · 共$trackCount集'),
             trailing: const Icon(Icons.play_circle_outline),
             onTap: () => _openBookDetail(item),
           ),

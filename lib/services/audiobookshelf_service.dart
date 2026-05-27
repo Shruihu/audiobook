@@ -159,8 +159,10 @@ class AudioBookshelfService {
       uri.replace(queryParameters: {
         'page': page.toString(),
         'limit': limit.toString(),
-        'expand': '1',  // 展开详细信息
-        'include': 'media.tracks,media.audioFiles',  // 包含完整的音轨数据
+        'sort': 'media.metadata.title',
+        'direction': 'asc',
+        'expand': '1',
+        'include': 'media.tracks,media.audioFiles',
       }),
       headers: _authHeaders(),
     );
@@ -216,6 +218,13 @@ class AudioBookshelfService {
         'Content-Type': 'application/json',
       };
 
+  /// 为流媒体 URL 附加 token 认证参数
+  String appendToken(String url) {
+    if (_token == null) return url;
+    final separator = url.contains('?') ? '&' : '?';
+    return '$url${separator}token=$_token';
+  }
+
   AbsLibraryItem _parseLibraryItem(Map<String, dynamic> json) {
     debugPrint('\n=== Parsing library item ===');
     debugPrint('Item ID: ${json['id']}');
@@ -251,14 +260,20 @@ class AudioBookshelfService {
       debugPrint('media.tracks is empty, trying media.audioFiles');
       final audioFiles = media?['audioFiles'] as List<dynamic>?;
       debugPrint('media.audioFiles found: ${audioFiles != null}, count: ${audioFiles?.length ?? 0}');
-      
+
       if (audioFiles != null) {
+        final itemId = json['id'] as String? ?? '';
         for (final file in audioFiles) {
           if (file is Map<String, dynamic>) {
             debugPrint('Processing audioFile: ${file['metadata']?['filename']}');
+            final fileIno = file['ino'];
+            // audioFiles 没有 contentUrl，需要构造流媒体 URL
+            final streamUrl = fileIno != null
+                ? buildFullUrl('/api/items/$itemId/file/$fileIno')
+                : buildFullUrl(file['contentUrl'] as String? ?? '');
             tracks.add(AbsAudioTrack(
               title: file['metadata']?['filename'] as String? ?? '',
-              contentUrl: buildFullUrl(file['contentUrl'] as String? ?? ''),
+              contentUrl: streamUrl,
               index: file['index'] as int? ?? 0,
               duration: file['duration'] as double?,
             ));

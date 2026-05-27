@@ -6,6 +6,7 @@ class AudioTrack {
   final Duration? duration;
   final String bookName;
   final Uint8List? bytes;
+  final Map<String, String>? headers;
 
   AudioTrack({
     required this.filePath,
@@ -13,6 +14,7 @@ class AudioTrack {
     required this.bookName,
     this.duration,
     this.bytes,
+    this.headers,
   });
 
   String get fileName => filePath.split('/').last;

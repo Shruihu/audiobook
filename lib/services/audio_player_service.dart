@@ -111,8 +111,9 @@ class AudioPlayerService {
       final localPath = _currentTrack!.filePath;
       debugPrint('Using local file: $localPath');
 
-      // 检测是否为 WMA 格式
-      final isWma = localPath.toLowerCase().endsWith('.wma');
+      // 检测是否为 WMA 格式（URL 流地址可能不含扩展名，需同时检查标题）
+      final isWma = localPath.toLowerCase().endsWith('.wma') ||
+          _currentTrack!.title.toLowerCase().endsWith('.wma');
       debugPrint('File format: ${isWma ? "WMA" : "Non-WMA"}');
       
       if (isWma) {
@@ -136,18 +137,22 @@ class AudioPlayerService {
         }
         
         // 播放
-        final media = Media(localPath);
+        final media = Media(localPath, httpHeaders: _currentTrack?.headers);
         await _mediaKitPlayer!.open(media, play: true);
         debugPrint('MediaKit playback started');
       } else {
         debugPrint('Using just_audio for non-WMA format');
         _useMediaKit = false;
-        
+
         // 停止 media_kit
         await _mediaKitPlayer?.stop();
-        
+
         // 使用 just_audio 播放
-        await _justAudioPlayer.setFilePath(localPath);
+        if (localPath.startsWith('http://') || localPath.startsWith('https://')) {
+          await _justAudioPlayer.setUrl(localPath, headers: _currentTrack?.headers);
+        } else {
+          await _justAudioPlayer.setFilePath(localPath);
+        }
         await _justAudioPlayer.play();
         debugPrint('just_audio playback started');
       }
@@ -162,7 +167,7 @@ class AudioPlayerService {
     if (track.bytes != null) {
       await _justAudioPlayer.setAudioSource(_BytesAudioSource(track.bytes!));
     } else {
-      await _justAudioPlayer.setUrl(track.filePath);
+      await _justAudioPlayer.setUrl(track.filePath, headers: track.headers);
     }
     await _justAudioPlayer.play();
   }
