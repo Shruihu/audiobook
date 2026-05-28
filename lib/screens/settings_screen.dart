@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/audiobookshelf_config.dart';
 import '../providers/player_provider.dart';
+import '../providers/theme_provider.dart';
 import '../services/abs_storage.dart';
 import 'abs_connect_screen.dart';
 
@@ -20,54 +21,17 @@ class SettingsScreen extends StatelessWidget {
               padding: EdgeInsets.all(16),
               child: Text('播放速度', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
-            ListTile(
-              title: const Text('0.5x'),
-              trailing: provider.playbackSpeed == 0.5 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
-              onTap: () {
-                provider.setPlaybackSpeed(0.5);
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              title: const Text('0.75x'),
-              trailing: provider.playbackSpeed == 0.75 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
-              onTap: () {
-                provider.setPlaybackSpeed(0.75);
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              title: const Text('1.0x'),
-              trailing: provider.playbackSpeed == 1.0 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
-              onTap: () {
-                provider.setPlaybackSpeed(1.0);
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              title: const Text('1.25x'),
-              trailing: provider.playbackSpeed == 1.25 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
-              onTap: () {
-                provider.setPlaybackSpeed(1.25);
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              title: const Text('1.5x'),
-              trailing: provider.playbackSpeed == 1.5 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
-              onTap: () {
-                provider.setPlaybackSpeed(1.5);
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              title: const Text('2.0x'),
-              trailing: provider.playbackSpeed == 2.0 ? const Icon(Icons.check, color: Colors.deepPurple) : null,
-              onTap: () {
-                provider.setPlaybackSpeed(2.0);
-                Navigator.pop(ctx);
-              },
-            ),
+            for (final speed in [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
+              ListTile(
+                title: Text('${speed}x'),
+                trailing: provider.playbackSpeed == speed
+                    ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
+                    : null,
+                onTap: () {
+                  provider.setPlaybackSpeed(speed);
+                  Navigator.pop(ctx);
+                },
+              ),
             const SizedBox(height: 8),
           ],
         ),
@@ -142,6 +106,46 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  void _showThemeModeSheet(BuildContext context, ThemeProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('主题模式', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            for (final mode in ThemeMode.values)
+              ListTile(
+                leading: Icon(
+                  {
+                    ThemeMode.system: Icons.brightness_auto,
+                    ThemeMode.light: Icons.light_mode,
+                    ThemeMode.dark: Icons.dark_mode,
+                  }[mode],
+                ),
+                title: Text({
+                  ThemeMode.system: '跟随系统',
+                  ThemeMode.light: '浅色模式',
+                  ThemeMode.dark: '深色模式',
+                }[mode]!),
+                trailing: provider.themeMode == mode
+                    ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
+                    : null,
+                onTap: () {
+                  provider.setThemeMode(mode);
+                  Navigator.pop(ctx);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -150,6 +154,28 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          const _SectionHeader(title: '外观'),
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, _) {
+              final labels = {
+                ThemeMode.system: '跟随系统',
+                ThemeMode.light: '浅色模式',
+                ThemeMode.dark: '深色模式',
+              };
+              final icons = {
+                ThemeMode.system: Icons.brightness_auto,
+                ThemeMode.light: Icons.light_mode,
+                ThemeMode.dark: Icons.dark_mode,
+              };
+              return ListTile(
+                leading: Icon(icons[themeProvider.themeMode]),
+                title: const Text('主题模式'),
+                subtitle: Text(labels[themeProvider.themeMode]!),
+                onTap: () => _showThemeModeSheet(context, themeProvider),
+              );
+            },
+          ),
+          const Divider(),
           const _SectionHeader(title: '网络书库'),
           ListTile(
             leading: const Icon(Icons.cloud),
@@ -223,13 +249,14 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
       child: Text(
         title,
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.bold,
-          color: Colors.grey[600],
+          color: Theme.of(context).colorScheme.primary,
+          letterSpacing: 0.5,
         ),
       ),
     );

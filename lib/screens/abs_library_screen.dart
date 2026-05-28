@@ -178,17 +178,11 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(_selectedLibrary?.name ?? '有声书库'),
-          actions: _selectedLibrary != null
-              ? [
-                  IconButton(
-                    icon: const Icon(Icons.home),
-                    onPressed: () {
-                      setState(() {
-                        _selectedLibrary = null;
-                      });
-                    },
-                  ),
-                ]
+          leading: _selectedLibrary != null
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                  onPressed: () => setState(() => _selectedLibrary = null),
+                )
               : null,
         ),
         body: _buildContent(),
@@ -198,31 +192,49 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 3,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      );
     }
 
     if (_error != null) {
+      final colorScheme = Theme.of(context).colorScheme;
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text('加载失败', style: TextStyle(color: Colors.grey[600])),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(_error!, textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12)),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _selectedLibrary == null
-                  ? _loadLibraries
-                  : () => _loadLibraryItems(_selectedLibrary!),
-              child: const Text('重试'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Colors.red.withAlpha(20),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.wifi_off_rounded,
+                    size: 32, color: Colors.redAccent),
+              ),
+              const SizedBox(height: 20),
+              Text('连接失败',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text(_error!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: _selectedLibrary == null
+                    ? _initialize
+                    : () => _loadLibraryItems(_selectedLibrary!),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('重试'),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -233,46 +245,88 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
 
     final items = _libraryItems[_selectedLibrary!.id] ?? [];
     if (items.isEmpty) {
-      return const Center(
-        child: Text('暂无书籍', style: TextStyle(color: Colors.grey)),
+      final colorScheme = Theme.of(context).colorScheme;
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.library_music_outlined, size: 56, color: colorScheme.onSurfaceVariant),
+            const SizedBox(height: 16),
+            Text('暂无书籍',
+                style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 15)),
+          ],
+        ),
       );
     }
 
     return _buildBookList(items);
   }
 
+  static const _libraryGradients = [
+    [Color(0xFF7C4DFF), Color(0xFF448AFF)],
+    [Color(0xFFFF6E40), Color(0xFFFFAB40)],
+    [Color(0xFF69F0AE), Color(0xFF00B0FF)],
+    [Color(0xFFFF80AB), Color(0xFFEA80FC)],
+  ];
+
   Widget _buildLibraryList() {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
+        childAspectRatio: 1.4,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 14,
       ),
       itemCount: _libraries.length,
       itemBuilder: (context, index) {
         final library = _libraries[index];
-        return Card(
-          child: InkWell(
-            onTap: () => _loadLibraryItems(library),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+        final gradient = _libraryGradients[index % _libraryGradients.length];
+        return GestureDetector(
+          onTap: () => _loadLibraryItems(library),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  gradient[0].withAlpha(200),
+                  gradient[1].withAlpha(200),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Stack(
               children: [
-                Icon(
-                  Icons.library_books,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.primary,
+                // Background icon
+                Positioned(
+                  right: -8,
+                  bottom: -8,
+                  child: Icon(
+                    Icons.headphones_rounded,
+                    size: 80,
+                    color: Colors.white.withAlpha(25),
+                  ),
                 ),
-                const SizedBox(height: 12),
+                // Content
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    library.name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        library.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -284,51 +338,156 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
   }
 
   Widget _buildBookList(List<AbsLibraryItem> items) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.55,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 18,
+      ),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        // 从 media 中获取音轨数量
         final trackCount = item.media?['numTracks'] as int? ?? 0;
-        
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: _buildCover(item),
-            title: Text(item.title ?? 'Unknown'),
-            subtitle: Text('${item.author ?? 'Unknown'} · 共$trackCount集'),
-            trailing: const Icon(Icons.play_circle_outline),
-            onTap: () => _openBookDetail(item),
-          ),
+        return _BookCard(
+          item: item,
+          trackCount: trackCount,
+          onTap: () => _openBookDetail(item),
         );
       },
     );
   }
 
-  Widget _buildCover(AbsLibraryItem item) {
-    if (item.coverUrl != null && item.coverUrl!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          item.coverUrl!,
-          width: 50,
-          height: 50,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return const SizedBox(
-              width: 50,
-              height: 50,
-              child: Icon(Icons.book, size: 32),
-            );
-          },
-        ),
-      );
-    }
-    return const SizedBox(
-      width: 50,
-      height: 50,
-      child: Icon(Icons.book, size: 32),
+}
+
+class _CoverPlaceholder extends StatelessWidget {
+  final BorderRadius borderRadius;
+  const _CoverPlaceholder({required this.borderRadius});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: borderRadius,
+      ),
+      child: Icon(Icons.headphones_rounded, size: 40, color: colorScheme.onSurfaceVariant),
+    );
+  }
+}
+
+class _BookCard extends StatelessWidget {
+  final AbsLibraryItem item;
+  final int trackCount;
+  final VoidCallback onTap;
+  const _BookCard({required this.item, required this.trackCount, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Cover image
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withAlpha(30),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (item.coverUrl != null && item.coverUrl!.isNotEmpty)
+                      Image.network(
+                        item.coverUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, error, stack) => _CoverPlaceholder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      )
+                    else
+                      const _CoverPlaceholder(borderRadius: BorderRadius.zero),
+                    // Bottom gradient overlay
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withAlpha(180),
+                            ],
+                            stops: const [0.5, 1.0],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Track count badge
+                    if (trackCount > 0)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '$trackCount集',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Title
+          Text(
+            item.title ?? '未知标题',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 3),
+          // Author
+          Text(
+            item.author ?? '未知作者',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

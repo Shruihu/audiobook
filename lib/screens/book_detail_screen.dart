@@ -101,16 +101,20 @@ class _TrackTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: isCurrent ? Colors.deepPurple : Colors.grey[300],
+        backgroundColor: isCurrent
+            ? colorScheme.primary
+            : colorScheme.surfaceContainerHighest,
         child: isPlaying
-            ? const Icon(Icons.equalizer, color: Colors.white, size: 18)
+            ? Icon(Icons.equalizer, color: colorScheme.onPrimary, size: 18)
             : Text(
                 '${index + 1}',
                 style: TextStyle(
-                  color: isCurrent ? Colors.white : Colors.grey[600],
+                  color: isCurrent ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
                   fontSize: 13,
+                  fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
       ),
@@ -119,15 +123,15 @@ class _TrackTile extends StatelessWidget {
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-          color: isCurrent ? Colors.deepPurple : null,
+          fontWeight: isCurrent ? FontWeight.w600 : FontWeight.normal,
+          color: isCurrent ? colorScheme.primary : null,
         ),
       ),
       subtitle: Text(
         track.fileName,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
       ),
       onTap: onTap,
     );

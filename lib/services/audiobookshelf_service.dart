@@ -285,11 +285,17 @@ class AudioBookshelfService {
     debugPrint('Final parsed library item: ${media?['metadata']?['title']}, tracks count: ${tracks.length}');
     debugPrint('========================\n');
 
+    final itemId = json['id'] as String;
+    final coverPath = media?['coverPath'] as String?;
+    final coverUrl = coverPath != null
+        ? appendToken(buildFullUrl('/api/items/$itemId/cover'))
+        : null;
+
     return AbsLibraryItem(
-      id: json['id'] as String,
+      id: itemId,
       title: media?['metadata']?['title'] as String?,
       author: media?['metadata']?['authorName'] as String?,
-      coverUrl: json['coverUrl'] != null ? buildFullUrl(json['coverUrl'] as String) : null,
+      coverUrl: coverUrl,
       mediaType: json['mediaType'] as String? ?? 'book',
       tracks: tracks,
       media: media, // 保存完整的 media 数据

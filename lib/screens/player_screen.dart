@@ -14,6 +14,7 @@ class PlayerBar extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
+        final colorScheme = Theme.of(context).colorScheme;
         return InkWell(
           onTap: () {
             Navigator.push(
@@ -25,17 +26,28 @@ class PlayerBar extends StatelessWidget {
             height: 64,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: const Offset(0, -1),
-                ),
-              ],
+              color: colorScheme.surface,
+              border: Border(
+                top: BorderSide(color: colorScheme.outlineVariant, width: 0.5),
+              ),
             ),
             child: Row(
               children: [
+                // Mini progress indicator
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    provider.isPlaying ? Icons.headphones : Icons.headphones_outlined,
+                    size: 20,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
                 // Track info
                 Expanded(
                   child: Column(
@@ -46,14 +58,17 @@ class PlayerBar extends StatelessWidget {
                         provider.currentTrack!.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         provider.currentBook?.name ?? '',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -61,10 +76,22 @@ class PlayerBar extends StatelessWidget {
                 // Play/pause button
                 IconButton(
                   icon: Icon(
-                    provider.isPlaying ? Icons.pause : Icons.play_arrow,
-                    size: 32,
+                    provider.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                    size: 36,
+                    color: colorScheme.primary,
                   ),
                   onPressed: () => provider.togglePlayPause(),
+                ),
+                // Close button
+                IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 22,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  onPressed: () => provider.stop(),
                 ),
               ],
             ),
@@ -80,6 +107,7 @@ class PlayerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(context.read<PlayerProvider>().currentBook?.name ?? '播放器'),
@@ -97,38 +125,24 @@ class PlayerScreen extends StatelessWidget {
                 const Spacer(flex: 2),
                 // Album art placeholder
                 Container(
-                  width: 220,
-                  height: 220,
+                  width: 240,
+                  height: 240,
                   decoration: BoxDecoration(
-                    color: Colors.grey[900],
-                    borderRadius: BorderRadius.circular(16),
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha(60),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
+                        color: colorScheme.shadow.withAlpha(40),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
                   child: Center(
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey[850],
-                        border: Border.all(color: Colors.grey[700]!, width: 2),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ),
+                    child: Icon(
+                      Icons.headphones_rounded,
+                      size: 80,
+                      color: colorScheme.primary.withAlpha(150),
                     ),
                   ),
                 ),
@@ -144,7 +158,7 @@ class PlayerScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   provider.currentBook?.name ?? '',
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
                 ),
                 const Spacer(),
                 // Progress bar
@@ -164,7 +178,7 @@ class PlayerScreen extends StatelessWidget {
                         );
                         provider.seek(seekPos);
                       },
-                      activeColor: Colors.deepPurple,
+                      activeColor: Theme.of(context).colorScheme.primary,
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -184,27 +198,29 @@ class PlayerScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.skip_previous, size: 40),
+                      icon: const Icon(Icons.skip_previous, size: 36),
                       onPressed: () => provider.previous(),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 20),
                     Container(
-                      decoration: const BoxDecoration(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.deepPurple,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       child: IconButton(
                         icon: Icon(
-                          provider.isPlaying ? Icons.pause : Icons.play_arrow,
-                          size: 40,
+                          provider.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                          size: 36,
                           color: Colors.white,
                         ),
                         onPressed: () => provider.togglePlayPause(),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 20),
                     IconButton(
-                      icon: const Icon(Icons.skip_next, size: 40),
+                      icon: const Icon(Icons.skip_next, size: 36),
                       onPressed: () => provider.next(),
                     ),
                   ],
@@ -215,15 +231,15 @@ class PlayerScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Row(
                     children: [
-                      Icon(Icons.volume_down, color: Colors.grey[600]),
+                      Icon(Icons.volume_down, color: colorScheme.onSurfaceVariant),
                       Expanded(
                         child: Slider(
                           value: provider.volume,
                           onChanged: (value) => provider.setVolume(value),
-                          activeColor: Colors.deepPurple,
+                          activeColor: colorScheme.primary,
                         ),
                       ),
-                      Icon(Icons.volume_up, color: Colors.grey[600]),
+                      Icon(Icons.volume_up, color: colorScheme.onSurfaceVariant),
                     ],
                   ),
                 ),
@@ -232,14 +248,19 @@ class PlayerScreen extends StatelessWidget {
                 TextButton.icon(
                   icon: Icon(
                     provider.hasSleepTimer ? Icons.timer : Icons.timer_outlined,
-                    color: provider.hasSleepTimer ? Colors.deepPurple : Colors.grey[600],
+                    size: 18,
+                    color: provider.hasSleepTimer
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
                   ),
                   label: Text(
                     provider.hasSleepTimer
                         ? '${provider.sleepRemaining.inMinutes} 分钟后关闭'
                         : '定时关闭',
                     style: TextStyle(
-                      color: provider.hasSleepTimer ? Colors.deepPurple : Colors.grey[600],
+                      color: provider.hasSleepTimer
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
                     ),
                   ),
                   onPressed: () => _showSleepTimerSheet(context, provider),

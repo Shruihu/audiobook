@@ -28,18 +28,19 @@ class _HomeShellState extends State<HomeShell> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const PlayerBar(),
-          BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
-            selectedFontSize: 12,
-            unselectedFontSize: 12,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.library_books),
+          NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (index) =>
+                setState(() => _currentIndex = index),
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.headphones_outlined),
+                selectedIcon: Icon(Icons.headphones),
                 label: '有声书',
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings),
+              NavigationDestination(
+                icon: Icon(Icons.settings_outlined),
+                selectedIcon: Icon(Icons.settings),
                 label: '设置',
               ),
             ],

@@ -8,6 +8,7 @@ import '../models/audio_track.dart';
 import '../services/audio_player_service.dart';
 import '../services/folder_scanner.dart';
 import '../services/library_storage.dart';
+import '../services/playback_storage.dart';
 
 class PlayerProvider extends ChangeNotifier {
   final AudioPlayerService _playerService = AudioPlayerService();
@@ -59,6 +60,12 @@ class PlayerProvider extends ChangeNotifier {
     _positionSubscription = _playerService.positionStream.listen((pos) {
       _position = pos;
       _syncCurrentTrack();
+      // 每 5 秒保存一次播放位置
+      final now = DateTime.now();
+      if (now.difference(_lastPositionSave).inSeconds >= 5 && pos.inSeconds > 0) {
+        _lastPositionSave = now;
+        PlaybackStorage.savePosition(pos.inMilliseconds);
+      }
       if (!_isDisposed) notifyListeners();
     });
 
@@ -77,6 +84,7 @@ class PlayerProvider extends ChangeNotifier {
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<Duration?>? _durationSubscription;
   StreamSubscription<bool>? _playingSubscription;
+  DateTime _lastPositionSave = DateTime.fromMillisecondsSinceEpoch(0);
 
   void _syncCurrentTrack() {
     if (_playerService.currentTrack != _currentTrack) {
@@ -199,6 +207,7 @@ class PlayerProvider extends ChangeNotifier {
       _subscribeToStreams();
       notifyListeners();
       debugPrint('playBook completed successfully');
+      unawaited(_savePlaybackState());
     } catch (e, stackTrace) {
       debugPrint('playBook error: $e');
       debugPrint('Stack trace: $stackTrace');
@@ -219,6 +228,7 @@ class PlayerProvider extends ChangeNotifier {
     _subscribeToStreams();
     notifyListeners();
     debugPrint('playTrack completed successfully');
+    unawaited(_savePlaybackState());
   }
 
   Future<void> togglePlayPause() async {
@@ -229,8 +239,24 @@ class PlayerProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> stop() async {
+    await _playerService.pause();
+    _currentTrack = null;
+    _currentBook = null;
+    _isPlaying = false;
+    _position = Duration.zero;
+    _duration = Duration.zero;
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
+    _sleepDuration = null;
+    _sleepEndTime = null;
+    await PlaybackStorage.clear();
+    notifyListeners();
+  }
+
   Future<void> seek(Duration position) async {
     await _playerService.seek(position);
+    unawaited(_savePlaybackState());
   }
 
   Future<void> next() async {
@@ -246,6 +272,80 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   bool get hasCurrentTrack => _currentTrack != null;
+
+  Future<void> _savePlaybackState() async {
+    if (_currentTrack == null || _currentBook == null) return;
+    await PlaybackStorage.save(PlaybackState(
+      bookName: _currentBook!.name,
+      folderPath: _currentBook!.folderPath,
+      trackFilePath: _currentTrack!.filePath,
+      positionMs: _position.inMilliseconds,
+      playbackSpeed: playbackSpeed,
+      volume: _volume,
+      isAbs: _currentBook!.folderPath.startsWith('http'),
+    ));
+  }
+
+  /// 恢复上次的播放状态
+  Future<void> restorePlayback() async {
+    try {
+      final saved = await PlaybackStorage.load();
+      if (saved == null) return;
+
+      // 恢复音量和播放速度
+      _volume = saved.volume;
+      await _playerService.setVolume(_volume);
+      await _playerService.setSpeed(saved.playbackSpeed);
+
+      // 恢复本地书的播放
+      if (!saved.isAbs) {
+        await _restoreLocalPlayback(saved);
+      }
+    } catch (e) {
+      debugPrint('restorePlayback error: $e');
+    }
+  }
+
+  Future<void> _restoreLocalPlayback(PlaybackState saved) async {
+    // 在已加载的书中查找匹配的
+    AudioBook? matchedBook;
+    for (final book in _books) {
+      if (book.folderPath == saved.folderPath && book.name == saved.bookName) {
+        matchedBook = book;
+        break;
+      }
+    }
+    // 如果没找到，等库加载完再试
+    if (matchedBook == null) return;
+
+    // 查找匹配的曲目
+    AudioTrack? matchedTrack;
+    int trackIndex = 0;
+    for (int i = 0; i < matchedBook.tracks.length; i++) {
+      if (matchedBook.tracks[i].filePath == saved.trackFilePath) {
+        matchedTrack = matchedBook.tracks[i];
+        trackIndex = i;
+        break;
+      }
+    }
+    if (matchedTrack == null) return;
+
+    // 恢复播放（准备但不自动播放）
+    _currentBook = matchedBook;
+    await _playerService.setPlaylist(matchedBook.tracks, startIndex: trackIndex);
+    await _playerService.pause(); // setPlaylist 会自动播放，立即暂停
+    _currentTrack = _playerService.currentTrack;
+    _isPlaying = false;
+    _subscribeToStreams();
+
+    // 跳转到保存的位置
+    if (saved.positionMs > 0) {
+      await _playerService.seek(saved.position);
+    }
+
+    notifyListeners();
+    debugPrint('Restored playback: ${saved.bookName} - ${matchedTrack.title} @ ${saved.position}');
+  }
 
   void setSleepTimer(Duration? duration) {
     _sleepTimer?.cancel();
@@ -273,11 +373,13 @@ class PlayerProvider extends ChangeNotifier {
   Future<void> setVolume(double value) async {
     _volume = value.clamp(0.0, 1.0);
     await _playerService.setVolume(_volume);
+    unawaited(_savePlaybackState());
     notifyListeners();
   }
 
   Future<void> setPlaybackSpeed(double speed) async {
     await _playerService.setSpeed(speed);
+    unawaited(_savePlaybackState());
     notifyListeners();
   }
 
