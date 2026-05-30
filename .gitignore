@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android 签名密钥
+*.jks
+*.keystore
+**/key.properties
+android/key.properties
