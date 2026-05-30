@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/audiobookshelf_config.dart';
 import '../providers/player_provider.dart';
+import '../providers/settings_provider.dart';
 import '../providers/theme_provider.dart';
-import '../services/abs_storage.dart';
 import 'abs_connect_screen.dart';
+import 'policy_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -176,6 +176,19 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
           const Divider(),
+          const _SectionHeader(title: '本地模式'),
+          Consumer<SettingsProvider>(
+            builder: (context, settings, _) {
+              return SwitchListTile(
+                secondary: const Icon(Icons.folder_open),
+                title: const Text('开启本地模式'),
+                subtitle: const Text('从本地文件夹扫描并播放有声书'),
+                value: settings.localMode,
+                onChanged: (value) => settings.setLocalMode(value),
+              );
+            },
+          ),
+          const Divider(),
           const _SectionHeader(title: '网络书库'),
           ListTile(
             leading: const Icon(Icons.cloud),
@@ -186,22 +199,6 @@ class SettingsScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const AudioBookshelfConnectScreen()),
-              );
-            },
-          ),
-          Consumer<PlayerProvider>(
-            builder: (context, provider, _) {
-              return ListTile(
-                leading: const Icon(Icons.folder_open),
-                title: const Text('管理连接'),
-                subtitle: const Text('查看和管理 AudioBookshelf 连接'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const _ConnectionManageScreen()),
-                  );
-                },
               );
             },
           ),
@@ -236,6 +233,17 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('版本'),
             subtitle: const Text('有声书播放器 v1.0.0'),
           ),
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: const Text('用户协议与隐私政策'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PolicyScreen()),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -259,105 +267,6 @@ class _SectionHeader extends StatelessWidget {
           letterSpacing: 0.5,
         ),
       ),
-    );
-  }
-}
-
-class _ConnectionManageScreen extends StatefulWidget {
-  const _ConnectionManageScreen();
-
-  @override
-  State<_ConnectionManageScreen> createState() => _ConnectionManageScreenState();
-}
-
-class _ConnectionManageScreenState extends State<_ConnectionManageScreen> {
-  List<AudioBookshelfConfig> _configs = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadConfigs();
-  }
-
-  Future<void> _loadConfigs() async {
-    final configs = await AbsStorage.getSavedConfigs();
-    setState(() {
-      _configs = configs;
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _deleteConfig(AudioBookshelfConfig config) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('确认删除'),
-        content: Text('删除连接 "${config.displayName}"？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('删除', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (confirm == true) {
-      await AbsStorage.removeConfig(config);
-      _loadConfigs();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('管理连接'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _configs.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.cloud_off, size: 64, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      const Text('暂无已保存的连接', style: TextStyle(color: Colors.grey)),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const AudioBookshelfConnectScreen()),
-                          );
-                        },
-                        icon: const Icon(Icons.add),
-                        label: const Text('添加连接'),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: _configs.length,
-                  itemBuilder: (context, index) {
-                    final config = _configs[index];
-                    return ListTile(
-                      leading: const Icon(Icons.cloud),
-                      title: Text(config.serverUrl),
-                      subtitle: Text(config.username ?? '匿名'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        onPressed: () => _deleteConfig(config),
-                      ),
-                    );
-                  },
-                ),
     );
   }
 }

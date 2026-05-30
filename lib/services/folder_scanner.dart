@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import '../models/audio_book.dart';
 import '../models/audio_track.dart';
 
@@ -44,7 +46,9 @@ class FolderScanner {
           bookName: dirName,
         ));
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('FolderScanner error: $e');
+    }
 
     final rootPath = dir.path;
 

@@ -99,6 +99,14 @@ class _TrackTile extends StatelessWidget {
     required this.onTap,
   });
 
+  static String _formatDuration(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    final s = d.inSeconds.remainder(60);
+    if (h > 0) return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -127,12 +135,12 @@ class _TrackTile extends StatelessWidget {
           color: isCurrent ? colorScheme.primary : null,
         ),
       ),
-      subtitle: Text(
-        track.fileName,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-      ),
+      subtitle: track.duration != null
+          ? Text(
+              _formatDuration(track.duration!),
+              style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+            )
+          : null,
       onTap: onTap,
     );
   }

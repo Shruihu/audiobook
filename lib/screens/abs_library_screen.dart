@@ -152,9 +152,10 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
   AudioBook _convertToAudioBook(AbsLibraryItem item) {
     final tracks = item.tracks.map((t) => AudioTrack(
       filePath: _absService?.appendToken(t.contentUrl) ?? t.contentUrl,
-      title: t.title.isNotEmpty ? t.title : 'Track ${t.index + 1}',
+      title: _formatTrackTitle(t.title, t.index),
       bookName: item.title ?? 'Unknown',
       duration: t.duration != null ? Duration(milliseconds: (t.duration! * 1000).round()) : null,
+      originalFileName: t.title.isNotEmpty ? t.title : null,
     )).toList();
 
     return AudioBook(
@@ -162,6 +163,28 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
       folderPath: _config?.serverUrl ?? '',
       tracks: tracks,
     );
+  }
+
+  /// 格式化音轨标题（仅用于显示，不影响播放）
+  /// 匹配 S01E01、EP01、E01 等格式，提取集号和标题
+  /// 例: "三体广播剧.S01E01 科学边界.wma" → "第1集 科学边界"
+  static String _formatTrackTitle(String raw, int index) {
+    try {
+      if (raw.isEmpty) return '第${index + 1}集';
+      // 去掉扩展名
+      var title = raw.replaceFirst(RegExp(r'\.\w+$'), '');
+      // 匹配 SxxExx 或 EPxx 或 Exx 格式
+      final epMatch = RegExp(r'[.\s_-]*(?:S\d+)?(?:EP?)(\d+)[.\s_-]*(.*)', caseSensitive: false).firstMatch(title);
+      if (epMatch != null) {
+        final epNum = int.tryParse(epMatch.group(1) ?? '') ?? (index + 1);
+        final epTitle = epMatch.group(2)?.trim() ?? '';
+        if (epTitle.isNotEmpty) return '第$epNum集 $epTitle';
+        return '第$epNum集';
+      }
+      return title;
+    } catch (_) {
+      return raw.isNotEmpty ? raw : '第${index + 1}集';
+    }
   }
 
   @override

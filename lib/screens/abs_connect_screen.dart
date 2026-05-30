@@ -163,22 +163,25 @@ class _AbsEditScreen extends StatefulWidget {
 }
 
 class _AbsEditScreenState extends State<_AbsEditScreen> {
-  final _serverUrlController = TextEditingController();
+  final _hostController = TextEditingController();
+  final _portController = TextEditingController(text: '13378');
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _connecting = false;
 
   @override
   void dispose() {
-    _serverUrlController.dispose();
+    _hostController.dispose();
+    _portController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _testAndSave() async {
-    final serverUrl = _serverUrlController.text.trim();
-    if (serverUrl.isEmpty) {
+    final host = _hostController.text.trim();
+    final port = _portController.text.trim();
+    if (host.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请填写服务器地址')),
       );
@@ -187,6 +190,7 @@ class _AbsEditScreenState extends State<_AbsEditScreen> {
 
     setState(() => _connecting = true);
 
+    final serverUrl = 'http://$host${port.isNotEmpty ? ':$port' : ''}';
     final config = AudioBookshelfConfig(
       serverUrl: serverUrl,
       username: _usernameController.text.trim().isEmpty
@@ -229,14 +233,32 @@ class _AbsEditScreenState extends State<_AbsEditScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextField(
-            controller: _serverUrlController,
-            decoration: const InputDecoration(
-              labelText: '服务器地址',
-              hintText: 'http://192.168.100.7:13378',
-              prefixIcon: Icon(Icons.cloud),
-            ),
-            keyboardType: TextInputType.url,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _hostController,
+                  decoration: const InputDecoration(
+                    labelText: '服务器地址',
+                    hintText: '192.168.100.7',
+                    prefixIcon: Icon(Icons.cloud),
+                  ),
+                  keyboardType: TextInputType.url,
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 100,
+                child: TextField(
+                  controller: _portController,
+                  decoration: const InputDecoration(
+                    labelText: '端口',
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           Text('认证信息（可选）',

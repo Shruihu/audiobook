@@ -111,9 +111,10 @@ class AudioPlayerService {
       final localPath = _currentTrack!.filePath;
       debugPrint('Using local file: $localPath');
 
-      // 检测是否为 WMA 格式（URL 流地址可能不含扩展名，需同时检查标题）
-      final isWma = localPath.toLowerCase().endsWith('.wma') ||
-          _currentTrack!.title.toLowerCase().endsWith('.wma');
+      // 检测是否为 WMA 格式（URL 通常不含扩展名，需用原始文件名判断）
+      final origName = _currentTrack!.originalFileName?.toLowerCase() ?? '';
+      final pathWithoutQuery = localPath.split('?').first.toLowerCase();
+      final isWma = pathWithoutQuery.endsWith('.wma') || origName.endsWith('.wma');
       debugPrint('File format: ${isWma ? "WMA" : "Non-WMA"}');
       
       if (isWma) {

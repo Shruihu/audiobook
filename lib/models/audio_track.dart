@@ -7,6 +7,7 @@ class AudioTrack {
   final String bookName;
   final Uint8List? bytes;
   final Map<String, String>? headers;
+  final String? originalFileName; // 原始文件名，用于格式检测
 
   AudioTrack({
     required this.filePath,
@@ -15,6 +16,7 @@ class AudioTrack {
     this.duration,
     this.bytes,
     this.headers,
+    this.originalFileName,
   });
 
   String get fileName => filePath.split('/').last;
