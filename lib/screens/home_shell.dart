@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/settings_provider.dart';
+import '../widgets/mini_player.dart';
 import 'abs_library_screen.dart';
 import 'library_screen.dart';
-import 'player_screen.dart';
 import 'settings_screen.dart';
 
 class HomeShell extends StatefulWidget {
@@ -57,7 +57,7 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const PlayerBar(),
+          const GlobalMiniPlayer(),
           NavigationBar(
             selectedIndex: safeIndex,
             onDestinationSelected: (index) =>

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/audio_book.dart';
 import '../models/audio_track.dart';
 import '../providers/player_provider.dart';
+import '../widgets/mini_player.dart';
 import 'player_screen.dart';
 
 class BookDetailScreen extends StatelessWidget {
@@ -45,9 +46,15 @@ class BookDetailScreen extends StatelessWidget {
         builder: (context, provider, _) {
           final currentTrack = provider.currentTrack;
 
-          return ListView.builder(
-            itemCount: book.tracks.length,
-            itemBuilder: (context, index) {
+          return Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 640),
+                    child: ListView.builder(
+                itemCount: book.tracks.length,
+                itemBuilder: (context, index) {
               final track = book.tracks[index];
               final isCurrent = currentTrack != null &&
                   currentTrack.filePath == track.filePath;
@@ -77,7 +84,13 @@ class BookDetailScreen extends StatelessWidget {
                 },
               );
             },
-          );
+                ),
+              ),
+            ),
+          ),
+          const GlobalMiniPlayer(),
+        ],
+      );
         },
       ),
     );

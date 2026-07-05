@@ -293,16 +293,19 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
   ];
 
   Widget _buildLibraryList() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.4,
-        crossAxisSpacing: 14,
-        mainAxisSpacing: 14,
-      ),
-      itemCount: _libraries.length,
-      itemBuilder: (context, index) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = (constraints.maxWidth / 200).floor().clamp(2, 5);
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: 1.4,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+          ),
+          itemCount: _libraries.length,
+          itemBuilder: (context, index) {
         final library = _libraries[index];
         final gradient = _libraryGradients[index % _libraryGradients.length];
         return GestureDetector(
@@ -356,16 +359,21 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
             ),
           ),
         );
+          },
+        );
       },
     );
   }
 
   Widget _buildBookList(List<AbsLibraryItem> items) {
-    return GridView.builder(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = (constraints.maxWidth / 160).floor().clamp(2, 6);
+        return GridView.builder(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.55,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          childAspectRatio: 0.65,
         crossAxisSpacing: 14,
         mainAxisSpacing: 18,
       ),
@@ -378,6 +386,8 @@ class _AbsLibraryScreenState extends State<AbsLibraryScreen> {
           trackCount: trackCount,
           onTap: () => _openBookDetail(item),
         );
+      },
+      );
       },
     );
   }

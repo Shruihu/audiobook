@@ -46,7 +46,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       }
     }
 
-    final result = await FilePicker.platform.getDirectoryPath(
+    final result = await FilePicker.getDirectoryPath(
       dialogTitle: '选择有声书文件夹',
     );
     if (result != null && mounted) {
@@ -108,14 +108,34 @@ class _LibraryScreenState extends State<LibraryScreen> {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 80),
-            itemCount: provider.books.length,
-            itemBuilder: (context, index) {
-              final book = provider.books[index];
-              return _BookTile(
-                book: book,
-                onDelete: () => provider.removeBook(book),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              // 响应式列数：每项最小宽度 180px
+              final crossAxisCount = (constraints.maxWidth / 180).floor().clamp(2, 6);
+              return GridView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  childAspectRatio: 0.7,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: provider.books.length,
+                itemBuilder: (context, index) {
+                  final book = provider.books[index];
+                  return _LocalBookCard(
+                    book: book,
+                    onDelete: () => provider.removeBook(book),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookDetailScreen(book: book),
+                        ),
+                      );
+                    },
+                  );
+                },
               );
             },
           );
@@ -129,26 +149,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 }
 
-class _BookTile extends StatelessWidget {
+class _LocalBookCard extends StatelessWidget {
   final AudioBook book;
   final VoidCallback onDelete;
+  final VoidCallback onTap;
 
-  const _BookTile({required this.book, required this.onDelete});
+  const _LocalBookCard({required this.book, required this.onDelete, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Dismissible(
-      key: ValueKey(book.folderPath),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: Colors.red,
-        child: const Icon(Icons.delete, color: Colors.white),
-      ),
-      confirmDismiss: (_) async {
-        return await showDialog<bool>(
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: () async {
+        final confirmed = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('确认删除'),
@@ -165,34 +179,47 @@ class _BookTile extends StatelessWidget {
             ],
           ),
         );
+        if (confirmed == true) onDelete();
       },
-      onDismissed: (_) => onDelete(),
-      child: ListTile(
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(Icons.headphones_rounded,
-              color: colorScheme.onSurfaceVariant, size: 28),
-        ),
-        title: Text(
-          book.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text('${book.trackCount} 集'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BookDetailScreen(book: book),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Cover area
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Icon(Icons.headphones_rounded,
+                    size: 36, color: colorScheme.onSurfaceVariant),
+              ),
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 8),
+          // Book name
+          Text(
+            book.name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 2),
+          // Track count
+          Text(
+            '${book.trackCount} 集',
+            style: TextStyle(
+              fontSize: 12,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
